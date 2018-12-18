@@ -25,7 +25,7 @@ namespace RecordUnion.Automation.Web.Framework.UtilHelper
             }
         }
 
-        public static List<IWebElement> ReturnWarnings<T>(this IWebElement elem, String validationType)
+        /*public static List<IWebElement> ReturnWarnings<T>(this IWebElement elem, String validationType)
         {
             Thread.Sleep(2500);
             var Messages = new List<IWebElement>();
@@ -38,7 +38,7 @@ namespace RecordUnion.Automation.Web.Framework.UtilHelper
             foreach (IWebElement element in Messages)
                 tmp.Add(element.FindElement(By.XPath("..")));
             return tmp;
-        }
+        }*/
 
         public static List<ValidatedInputFields> FindInputFieldsGeneric(this IWebElement element)
         {
@@ -68,8 +68,51 @@ namespace RecordUnion.Automation.Web.Framework.UtilHelper
             return tmp;
         }
         
+        public static List<string> ReadAllTextMessagesReturnedInWarning(this IWebElement element, IList<IWebElement> Messages)
+        {
+            var warningTextMessages = new List<String>();
+            foreach (IWebElement elem in Messages)
+            {
+                IWebElement message = elem.FindElement(By.ClassName("title"));
+                warningTextMessages.Add(message.Text);
+            }
+            return warningTextMessages;
+        }
         
+        public static IList<ValidatedInputFields> FindInputFields(this IWebElement fieldsContainer)
+        {
+            var projectInputFields = new List<ValidatedInputFields>();
+            IList<IWebElement> Inputs = fieldsContainer.FindElements(By.ClassName("kit-input"));
+            foreach (IWebElement elem in Inputs)
+            {
+                IWebElement Input = elem.FindElement(By.ClassName("input"));
+                IWebElement Validations = elem.FindElement(By.CssSelector(".kit-list"));
+                projectInputFields.Add(new ValidatedInputFields(Input, Validations));
+            }
+            return projectInputFields;
+        }
         
+        public static List<string> ReadAllValidationMessagesForInputField(this IWebElement fieldContainer, int field, string validationType)
+        {
+            var validatedInputField = fieldContainer.FindInputFields().ElementAt(field);
+            IList<IWebElement> errorMessages = validatedInputField.ListOfErrorMessages.ReturnWarnings(validationType);
+            return validatedInputField.InputField.ReadAllTextMessagesReturnedInWarning(errorMessages);
+        }
+
+        public static List<string> ReadAllValidationMessagesForDropDownField(this EditReleaseMetadataDropDownComponent field, string validationType)
+        {
+            IList<IWebElement> errorMessages = field.ListOfValidationMessages.ReturnWarnings(validationType);
+            return field.InputDropDown.ReadAllTextMessagesReturnedInWarning(errorMessages);
+        }
+
+        public static void RemoveNumberOfCharactersFromInputField(this IWebElement elem, int number)
+        {
+            while (number > 0)
+            {
+                elem.SendKeys(Keys.Backspace);
+                number--;
+            }
+        }
 
     }
 }

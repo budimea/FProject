@@ -36,6 +36,7 @@ namespace RecordUnion.Automation.Web.Framework.UtilHelper
             
             IList<IWebElement> listOfAllElements = element.FindElements(By.ClassName("row"));
             var matchingResult = listOfAllElements.FirstOrDefault(e => e.Text == selection);
+            Thread.Sleep(1500);
             matchingResult.Click();
         }
         

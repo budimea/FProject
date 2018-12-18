@@ -4,35 +4,25 @@ namespace RecordUnion.Automation.Web.Framework.Components
 {
     public class EditReleaseMetadataDropDownComponent
     {
-        private IWebElement _rootDropDownElement;
-        private IWebElement _inputDropDown;
-        private IWebElement _dropDownExpander;
+        public IWebElement ClearButton { get; set; }
 
-        public IWebElement RootDropDownElement
-        {
-            get => _rootDropDownElement;
-            set => _rootDropDownElement = value;
-        }
+        public IWebElement RootDropDownElement { get; set; }
 
-        public IWebElement InputDropDown
-        {
-            get => _inputDropDown;
-            set => _inputDropDown = value;
-        }
+        public IWebElement InputDropDown { get; set; }
 
-        public IWebElement DropDownExpander
-        {
-            get => _dropDownExpander;
-            set => _dropDownExpander = value;
-        }
+        public IWebElement DropDownExpander { get; set; }
+        
+        public IWebElement ListOfValidationMessages { get; set; }
 
 
         public EditReleaseMetadataDropDownComponent(IWebElement rootDropDownElement, IWebElement inputDropDown,
-            IWebElement dropDownExpander)
+            IWebElement dropDownExpander, IWebElement clearButton, IWebElement listOfValidationMessages)
         {
-            _rootDropDownElement = rootDropDownElement;
-            _inputDropDown = inputDropDown;
-            _dropDownExpander = dropDownExpander;
+            RootDropDownElement = rootDropDownElement;
+            InputDropDown = inputDropDown;
+            DropDownExpander = dropDownExpander;
+            ClearButton=clearButton;
+            ListOfValidationMessages = listOfValidationMessages;
         }
 
             public bool Equals(EditReleaseMetadataDropDownComponent x, EditReleaseMetadataDropDownComponent y)
@@ -41,7 +31,7 @@ namespace RecordUnion.Automation.Web.Framework.Components
                 if (ReferenceEquals(x, null)) return false;
                 if (ReferenceEquals(y, null)) return false;
                 if (x.GetType() != y.GetType()) return false;
-                return Equals(x._inputDropDown, y._inputDropDown) && Equals(x._dropDownExpander, y._dropDownExpander);
+                return Equals(x.ClearButton, y.ClearButton) && Equals(x.RootDropDownElement, y.RootDropDownElement) && Equals(x.InputDropDown, y.InputDropDown) && Equals(x.DropDownExpander, y.DropDownExpander)&& Equals(x.ListOfValidationMessages, y.ListOfValidationMessages);
             }
     }
 }

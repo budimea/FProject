@@ -11,7 +11,6 @@ namespace RecordUnion.Automation.Web.Framework.Components
         private IWebElement _submit;
         private IWebElement _cancel;
         
-
         public List<ValidatedInputFields> InputFields { get => _inputFields; set => _inputFields = value; }
         public IWebElement Toggle { get => _toggle; set => _toggle = value; }        
         public IWebElement Submit { get => _submit; set => _submit = value; }
@@ -24,8 +23,6 @@ namespace RecordUnion.Automation.Web.Framework.Components
             _submit = submit;
             _cancel = cancel;
         }
-
-
 
         public override bool Equals(object obj)
         {

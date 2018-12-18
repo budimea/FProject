@@ -16,9 +16,6 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
 
         [FindsBy(How = How.CssSelector, Using = ".kit-element.enMaxWidthFORM_770")]
         private IWebElement _elementContainer;
-
-        private ValidatedInputFields _releaseTitle;
-        private ValidatedInputFields _releaseVersion;
         private FindOrCreateProfileToCredit _findOrCreateProfileToCredit;
         
 
@@ -37,21 +34,19 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
         private List<IWebElement> FindAllCreditsWithMultipleProfiles() => _elementContainer
             .FindElements(By.CssSelector(".form-projects-primary-artists")).ToList();
 
-        public ProjectReleaseInformationPage ChangeReleaseTitle(string NewProjectTitle)
+        public ProjectReleaseInformationPage ChangeInputBatchField(int batch, int field, string value)
         {
-            ChangeReleaseTitleWithNewValue(NewProjectTitle);
+            ChangeReleaseInputWithNewValue(batch, field, value);
             return new ProjectReleaseInformationPage(this._driver);
         }
 
-        private void ChangeReleaseTitleWithNewValue(string newProjectTitle)
+        private void ChangeReleaseInputWithNewValue(int batch, int field, string newValue)
         {
-            if (_releaseTitle == null)
-            {
-                _releaseTitle=FindElementInBatchInputs(ReleaseMetaDataBatches
-                    .ReleaseTitleVersionBatch, ReleaseMetaDataBatches.Title);
-            }
-            _releaseTitle.InputField.Clear();
-            _releaseTitle.InputField.SendKeys(newProjectTitle);
+            var fieldBatch=FindElementInBatchInputs(batch, field);
+            if (!fieldBatch.InputField.Displayed)
+                EnableToggleForFieldOrComponent(batch);
+            fieldBatch.InputField.Clear();
+            fieldBatch.InputField.SendKeys(newValue);
         }
 
         private ValidatedInputFields FindElementInBatchInputs(int batch, int index)
@@ -91,10 +86,7 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
         }
 
         private IWebElement readSpecificBatch(int batch)=>FindAllInputFieldBatches().ElementAt(batch);
-        /*{
-            return FindAllInputFieldBatches().ElementAt(batch);
-        }*/
-            
+
         private void SaveSpecificInputBatchChange(int batch)
         {
             IWebElement submitElement = getSubmitButton(batch);
@@ -106,7 +98,6 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
         {
             ReleaseInputBatchComponent changedBatch = null;
             if (_webInputBatches.Count==0)
-                //changedBatch=FindBatch(batch);
                 changedBatch=FindSpecificComponent(batch);
             if(changedBatch==null)
                 throw new Exception("The batch is not changed");
@@ -124,7 +115,6 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
             foreach(IWebElement elem in WebInputBatches)
             {
                 var BatchInputs = elem.FindInputFieldsGeneric();
-                //List<IWebElement> ActionButtonsContainer = elem.FindElements(By.TagName("button")).ToList();
                 try
                 {
                     submit = elem.FindElement(
@@ -141,26 +131,18 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
             }
         }
 
-        public ListReleasesViewPage NavigateToProjectsScreen()
-        {
-            var btnReleases=_driver.ReturnHeaderNavigationItems().ElementAt(2);
-            btnReleases.Click();
-            return new ListReleasesViewPage(_driver);;
-        }
-
         public bool IsFirstBatchSubmitButtonEnabled()=> getSubmitButton(ReleaseMetaDataBatches.ReleaseTitleVersionBatch).IsEnabled();
 
         public List<string> readSoftValidationsForBatch(int batch) =>
-            readValidationsForBatch(batch, CommonUsedVariables.Soft);
+            readValidationsForBatch(batch, ValidationsMessage.Soft);
 
         public List<String> readHardValidationForBatch(int batch) =>
-            readValidationsForBatch(batch, CommonUsedVariables.Hard);
+            readValidationsForBatch(batch, ValidationsMessage.Hard);
 
         private List<string> readValidationsForBatch(int batch, String validationType)
         {
             ReleaseInputBatchComponent InputBatch = null;
             if (_webInputBatches.Count==0)
-                //InputBatch = FindBatch(batch);
                 InputBatch = FindSpecificComponent(batch);
             else InputBatch = _webInputBatches.ElementAt(batch);
             var _listOfErrors = InputBatch.InputFields.ElementAt(0).ListOfErrorMessages;
@@ -181,7 +163,6 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
 
         public ProjectReleaseInformationPage CancelChangesOfBatch(int batch)
         {
-            //IWebElement _cancel;
             var _cancel = getCancelButton(batch);
             _cancel.Click();
             return new ProjectReleaseInformationPage(this._driver);
@@ -197,49 +178,16 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
             return changedBatch.Cancel;
         }
 
-        public ProjectReleaseInformationPage ChangeReleaseVersion(string projectVersion)
+        public ProjectReleaseInformationPage EnableToggleForFieldOrComponent(int releaseBatch)
         {
-            if (_releaseVersion==null)
-                _releaseVersion = FindElementInBatchInputs(ReleaseMetaDataBatches.ReleaseTitleVersionBatch,
-                    ReleaseMetaDataBatches.Version);
-            if (!_releaseVersion.InputField.Displayed)
-                CheckIfVersionIsEnabled();
-            _releaseVersion.InputField.Clear();
-            _releaseVersion.InputField.SendKeys(projectVersion);
+            var batch= readSpecificBatch(releaseBatch);
+            if(!CheckIfToggleIsEnabled(batch))
+                ChangeToggle(batch);
+            else throw new Exception("Test Flow Exception");
             return new ProjectReleaseInformationPage(this._driver);
         }
 
-        private ProjectReleaseInformationPage CheckIfVersionIsEnabled()
-        {
-            enableToggleForAddingProjectVersion();
-            return new ProjectReleaseInformationPage(this._driver);
-        }
-
-        public ProjectReleaseInformationPage enableToggleForAddingProjectVersion()
-        {
-            var batch= readSpecificBatch(ReleaseMetaDataBatches.ReleaseTitleVersionBatch);
-            enableToggle(batch);
-            return new ProjectReleaseInformationPage(this._driver);
-        }
-
-        public IWebElement GetInputValueInBatch(int Batch, int field)
-        {
-            var InputBatch = FindSpecificComponent(Batch);
-            return InputBatch.InputFields.ElementAt(field).InputField;
-        }
-
-        public ProjectReleaseInformationPage SetMainGenre(string selection)
-        {
-            //if (_releaseMainGenre == null)
-                var dropDownField = FindElementInBatchDropDown(ReleaseMetaDataBatches.MainGenreBatch,
-                    ReleaseMetaDataBatches.MainGenre);
-            
-           // Thread.Sleep(15000);
-            ExpandNonSearchableDropDown(dropDownField)
-                .ChooseFromNonSearchableDropDown(dropDownField, ReleaseMetaDataBatches.MainGenre,selection);
- 
-            return new ProjectReleaseInformationPage(this._driver);
-        }
+        public IWebElement GetInputValueInBatch(int batch, int field)=> FindElementInBatchInputs(batch, field).InputField;
 
         private ProjectReleaseInformationPage ChooseFromNonSearchableDropDown(
             EditReleaseMetadataDropDownComponent dropDownField, int field, string selection)
@@ -268,44 +216,23 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
         {
             var _rootDropDown = rootDropDownContainer.FindElements(By.CssSelector(".kit-dropdown")).ElementAt(field);
             var _inputElement = _rootDropDown.FindElement(By.CssSelector(".kit-input"));
-            var _dropDownExpander = _inputElement.FindElements(By.ClassName("kit-mint")).ElementAt(0);
-            return new EditReleaseMetadataDropDownComponent(_rootDropDown, _inputElement,_dropDownExpander);
+            var listOfInputFieldExtensions = _inputElement.FindElements(By.ClassName("kit-mint"));
+            var _dropDownExpander = default(IWebElement);
+            var _clearInputField = default(IWebElement);
+            var _validationMessages = _inputElement.FindElement(By.CssSelector(".kit-list"));
+            if (listOfInputFieldExtensions.Count == 3)
+            {
+                _dropDownExpander = listOfInputFieldExtensions.ElementAt(1);
+                _clearInputField = listOfInputFieldExtensions.ElementAt(0);
+            }
+            else _dropDownExpander = listOfInputFieldExtensions.ElementAt(0);
+            return new EditReleaseMetadataDropDownComponent(_rootDropDown, _inputElement,_dropDownExpander, _clearInputField, _validationMessages);
         }
 
-        public ProjectReleaseInformationPage SetMainSubGenre(string selection)
-        {
-            var dropdownField = FindElementInBatchDropDown(ReleaseMetaDataBatches.MainGenreBatch,
-                    ReleaseMetaDataBatches.MainSubGenre);
-            ExpandNonSearchableDropDown(dropdownField)
-                .ChooseFromNonSearchableDropDown(dropdownField,ReleaseMetaDataBatches.MainSubGenre,selection);
-            return new ProjectReleaseInformationPage(this._driver);
-        }
-
-
-        public ProjectReleaseInformationPage SetAlternateMainGenre(string selection)
-        {
-            var batch = readSpecificBatch(ReleaseMetaDataBatches.AlternateGenreBatch);
-            enableToggle(batch);
-            var alternatemaingenre=FindElementInBatchDropDown(ReleaseMetaDataBatches.AlternateGenreBatch,
-                ReleaseMetaDataBatches.MainGenre);
-            ExpandNonSearchableDropDown(alternatemaingenre)
-                .ChooseFromNonSearchableDropDown(alternatemaingenre,ReleaseMetaDataBatches.MainGenre,selection);
-            return new ProjectReleaseInformationPage(this._driver);
-        }
-
-        private void enableToggle(IWebElement element)
+        private void ChangeToggle(IWebElement element)
         {
             IWebElement toggle = element.FindElement(By.ClassName("slider"));
             toggle.Click();
-        }
-
-        public ProjectReleaseInformationPage SetAlternateSubGenre(string selection)
-        {
-            var dropdownField = FindElementInBatchDropDown(ReleaseMetaDataBatches.AlternateGenreBatch,
-                ReleaseMetaDataBatches.MainSubGenre);
-            ExpandNonSearchableDropDown(dropdownField)
-                .ChooseFromNonSearchableDropDown(dropdownField,ReleaseMetaDataBatches.MainSubGenre,selection);
-            return new ProjectReleaseInformationPage(this._driver);
         }
 
         public ProjectReleaseInformationPage SaveBatchWithoutValidations(int batch)
@@ -315,18 +242,17 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
             return new ProjectReleaseInformationPage(this._driver);
         }
 
-        public ProjectReleaseInformationPage AddPrimaryArtistFromExistingProfile(string primaryArtistOne)
+        public ProjectReleaseInformationPage AddCreditsToAcceptingMultipleProfiles(int role, string profile)
         {
-            var primaryArtistsComponent=FindAllCreditsWithMultipleProfiles().ElementAt(ReleaseMetaDataBatches.PrimaryArtistRole);
-            AddNewCreditToProfile(primaryArtistsComponent, primaryArtistOne);
-
+            var CreditComponent=FindAllCreditsWithMultipleProfiles().ElementAt(role);
+            AddNewCreditToProfile(CreditComponent, profile);
             return new ProjectReleaseInformationPage(this._driver);
         }
 
         private ProjectReleaseInformationPage AddNewCreditToProfile(IWebElement credit, string selection)
         {
-            var creatorPrimaryArtist = credit.FindElement(By.CssSelector(".kit-bar.isCreator"));
-            creatorPrimaryArtist.Click();
+            var creditPad = credit.FindElement(By.CssSelector(".kit-bar.isCreator"));
+            creditPad.Click();
             Thread.Sleep(10000);
             CreditAProfile(selection);
             return new ProjectReleaseInformationPage(this._driver);
@@ -337,6 +263,183 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
             _findOrCreateProfileToCredit=new FindOrCreateProfileToCredit(this._driver);
             _findOrCreateProfileToCredit.SearchAndCreditExistingProfile(selection);
             return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        public ProjectReleaseInformationPage AddSingleCollaboratorCreditToExistingProfile(int role, string existingProfile, string collaboratorsRole)
+        {
+            var creditComponent = FindAllCreditsWithMultipleProfiles().ElementAt(role);
+            var creatorPad = creditComponent.FindElement(By.CssSelector(".kit-bar.isCreator"));
+            creatorPad.Click();
+            Thread.Sleep(2000);
+            AddNewCollaboratorRoleToProfile(existingProfile, collaboratorsRole);
+            Thread.Sleep(3000);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        private ProjectReleaseInformationPage AddNewCollaboratorRoleToProfile(string existingProfile, string collaboratorsRole)
+        {
+            _findOrCreateProfileToCredit=new FindOrCreateProfileToCredit(this._driver);
+            _findOrCreateProfileToCredit.SearchAndCreditExistingProfileWithCollaboratorsRole(existingProfile,collaboratorsRole);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        public ProjectReleaseInformationPage AddCreditToRoleAcceptingOneProfile(int role, string existingProfile)
+        {
+            var creditComponent = FindTheRootElementForRoleWithSingleCredit(role);
+            var creatorPad = creditComponent.FindElement(By.CssSelector(".kit-bar.isCreator"));
+            Thread.Sleep(1000);
+            creatorPad.Click();
+            Thread.Sleep(10000);
+            CreditAProfile(existingProfile);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        private IWebElement FindTheRootElementForRoleWithSingleCredit(int role)=> _elementContainer.FindElement(role == 0 ? By.CssSelector(".form-projects-copyright-owner") : By.CssSelector(".form-projects-label"));
+
+        public ProjectReleaseInformationPage AddLabelFromExistingProfile(string existingProfile)
+        {
+            var creditLabel = _elementContainer.FindElement(By.CssSelector(".form-projects-label"));
+            var creatorPad = creditLabel.FindElement(By.CssSelector(".kit-bar.isCreator"));
+            creatorPad.Click();
+            Thread.Sleep(1000);
+            CreditAProfile(existingProfile);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        public ProjectReleaseInformationPage AddCatalogueNumber(int field, string catalogueNum)
+        {
+            var catalogueNumber = FindAllInputFieldBatches().ElementAt(field);
+            if(!CheckIfToggleIsEnabled(catalogueNumber))
+                ChangeToggle(catalogueNumber);
+            PopulateCatalogueNumber(catalogueNumber, catalogueNum);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        private ProjectReleaseInformationPage PopulateCatalogueNumber(IWebElement catalogueNumber, string catalogueNum)
+        {
+            var catalogueInput = catalogueNumber.FindElement(By.CssSelector("input[type='text']"));
+            catalogueInput.SendKeys(catalogueNum);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        public ProjectReleaseInformationPage AddEanOrUpcCode(int field, string eanUpcCode)
+        {
+            var eanContainer = FindAllInputFieldBatches().ElementAt(field);
+            var eanInputField = eanContainer.FindElement(By.CssSelector("input[type='text']"));
+            eanInputField.SendKeys(eanUpcCode);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        public ProjectReleaseInformationPage SetReleaseLanguage(int field, string selection)
+        {
+            var languageComponent = FindElementInBatchDropDown(field, 0);
+            ExpandNonSearchableDropDown(languageComponent)
+                .ChooseFromNonSearchableDropDown(languageComponent, 0, selection);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+        
+        public ListReleasesViewPage NavigateToProjectsScreen()
+        {
+            var btnReleases=_driver.ReturnHeaderNavigationItems().ElementAt(2);
+            btnReleases.Click();
+            return new ListReleasesViewPage(_driver);;
+        }
+
+        public string GetInputFieldValue(int batch, int field)=>GetInputValueInBatch(batch, field).GetAttribute("value");
+
+        public ProjectReleaseInformationPage RemoveOptionalFieldFromBatch(int batch, int field)
+        {
+            var batchWithToggle = FindAllInputFieldBatches().ElementAt(batch);
+            if(!CheckIfToggleIsEnabled(batchWithToggle))
+                throw new Exception("Field is not enabled");
+            var toggle= FindSpecificComponent(batch).Toggle;
+            ChangeToggle(toggle);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        private bool CheckIfToggleIsEnabled(IWebElement parentElement) =>
+            parentElement.FindElements(By.CssSelector(".kit-toggle.isOn")).Count > 0;
+        
+        public List<string> ReadAllMessagesForGivenField(int batch, int field, string validationType)
+        {
+            var inputBatch = FindAllInputFieldBatches().ElementAt(batch);
+            return inputBatch.ReadAllValidationMessagesForInputField(field, validationType);
+        }
+
+        public List<string> ReadAllMessagesForGivenDropDownField(int batch, string validationType)
+        {
+            var dropDownBatch = readSpecificBatch(batch);
+            var dropDownElements = FindAllDropDownElements(dropDownBatch);
+            if (dropDownElements.Count == 2)
+                return dropDownElements.ElementAt(1).ReadAllValidationMessagesForDropDownField(validationType);
+            else return dropDownElements.ElementAt(0).ReadAllValidationMessagesForDropDownField(validationType);
+        }
+
+        private List<EditReleaseMetadataDropDownComponent> FindAllDropDownElements(IWebElement rootBatchElement)
+        {
+            var listOfDropDownFields = new List<EditReleaseMetadataDropDownComponent>();
+            var _rootDropDown = rootBatchElement.FindElements(By.CssSelector(".kit-dropdown"));
+            foreach (var elem in _rootDropDown)
+            {
+                var _inputElement = elem.FindElement(By.CssSelector(".kit-input"));
+                var listOfInputFieldExtensions = _inputElement.FindElements(By.ClassName("kit-mint"));
+                var _validationMessages = _inputElement.FindElement(By.CssSelector(".kit-list"));
+                var _dropDownExpander = default(IWebElement);
+                var _clearInputField = default(IWebElement);
+                if (listOfInputFieldExtensions.Count == 3)
+                {
+                    _dropDownExpander = listOfInputFieldExtensions.ElementAt(1);
+                    _clearInputField = listOfInputFieldExtensions.ElementAt(0);
+                }
+                else _dropDownExpander = listOfInputFieldExtensions.ElementAt(0); 
+                listOfDropDownFields.Add(new EditReleaseMetadataDropDownComponent(elem, _inputElement,_dropDownExpander, _clearInputField, _validationMessages));
+            }
+            return listOfDropDownFields;
+        }
+
+        public string GetDropDownFieldValue(int batch, int field)
+        {
+            var dropDownElement = GetDropDownInputField(batch, field);
+            var elementText = dropDownElement.FindElement(By.TagName("input"));
+            return elementText.GetAttribute("value");
+        }
+
+        private IWebElement GetDropDownInputField(int batch, int field) =>
+            FindElementInBatchDropDown(batch, field).InputDropDown;
+
+        public ProjectReleaseInformationPage ChooseAValueFromDropDownList(int batch, int field, string selection)
+        {
+            var dropDownField = FindElementInBatchDropDown(batch, field);
+            if (!dropDownField.InputDropDown.Displayed)
+                EnableToggleForFieldOrComponent(batch);
+            ExpandNonSearchableDropDown(dropDownField)
+                .ChooseFromNonSearchableDropDown(dropDownField, field,selection);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        public bool CheckIfLookUpFieldReturnsValues(int batch, int field)
+        {
+            var dropDownField = FindElementInBatchDropDown(batch, field);
+            if (dropDownField.InputDropDown.Displayed)
+                return dropDownField.InputDropDown.IsEnabled();
+            return false;
+        }
+
+        public ProjectReleaseInformationPage ClearValueFromField(int batch, int field)
+        {
+            var dropDownInput = FindElementInBatchDropDown(batch, field);
+            dropDownInput.ClearButton.Click();
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        public ProjectReleaseInformationPage ChooseAValueFromDropDownList(int batch, string selection)
+        {
+            return ChooseAValueFromDropDownList(batch, 0, selection);
+        }
+
+        public string GetDropDownFieldValue(int batch)
+        {
+            return GetDropDownFieldValue(batch, 0);
         }
     }
 }

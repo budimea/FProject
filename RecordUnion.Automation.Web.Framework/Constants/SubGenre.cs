@@ -2,8 +2,10 @@ namespace RecordUnion.Automation.Web.Framework.Constants
 {
     public class SubGenre
     {
-        public static string AcidRock = "Acid rock";
-        public static string DoomMetal = "Doom metal";
-        public static string ParodyMusic = "Parody music";
+        public const string AcidRock = "Acid rock";
+        public const string DoomMetal = "Doom metal";
+        public const string ParodyMusic = "Parody music";
+        public const string BluesRock = "Blues rock";
+        public const string ClassicBlues = "Classic Blues";
     }
 }

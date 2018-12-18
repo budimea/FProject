@@ -7,7 +7,7 @@ namespace RecordUnion.Automation.Web.Framework.Constants
         public const string DevLogin = "https://dev-spa.recordunion.com/login";
 
 
-        public const string QaLoginEmail = "autDemov2@test.com";
+        public const string QaLoginEmail = "Fridayuserweb@test.com";
         public const string QaLoginPassword = "Test1111";
         public const string QALoginName = "(you) Aut Demo";
 

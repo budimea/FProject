@@ -19,5 +19,12 @@
         public const int ProducersRole = 2;
         public const int AdditionalCollaboratorsRole = 3;
 
+        public const int ReleaseCopyrightOwner = 0;
+        public const int Label = 1;
+        
+
+        public const int CatalogueNumber = 3;
+        public const int Ean = 4;
+        public const int Language = 5;
     }
 }
