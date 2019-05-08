@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using OpenQA.Selenium;
+using OpenQA.Selenium.Support.UI;
 
 namespace RecordUnion.Automation.Web.Framework.UtilHelper
 {
@@ -33,7 +34,6 @@ namespace RecordUnion.Automation.Web.Framework.UtilHelper
 
         public static void SelectFromStaticDropDown(this IWebElement element, string selection)
         {
-            
             IList<IWebElement> listOfAllElements = element.FindElements(By.ClassName("row"));
             var matchingResult = listOfAllElements.FirstOrDefault(e => e.Text == selection);
             Thread.Sleep(1500);
@@ -42,13 +42,13 @@ namespace RecordUnion.Automation.Web.Framework.UtilHelper
         
         public static void SelectFromResultsByMatchingStart(this IWebElement element, string selection)
         {
-
             IList<IWebElement> listOfAllElements =
                 element.FindElements(By.ClassName("row")).Skip(1).Select(e =>
                     e.FindElement(By.CssSelector(".kit-typography.enTypographyTypes-B3.suggestion.kit-element"))).ToList();
             //IList<IWebElement> listOfSubElements=listOfAllElements.Select(e =>
                 //e.FindElement(By.CssSelector(".kit-typography.enTypographyTypes-B3.suggestion.kit-element"))).ToList();
             var matchingResult = listOfAllElements.FirstOrDefault(e => e.Text.Contains(selection));
+            Thread.Sleep(1500);
             matchingResult.Click();
         }
     }

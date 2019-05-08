@@ -26,7 +26,7 @@ namespace RecordUnion.Automation.Web.Framework.Components
             _listOfSubMenuItems = readSubMenuItems();
         }
 
-        private IList<IWebElement> readSubMenuItems() => _tabContainer.FindElements(By.CssSelector(".kit-tabs-tab"));
+        private IList<IWebElement> readSubMenuItems() => _tabContainer.FindElements(By.CssSelector(".kit-tab"));
  
         //TODO 1. Refactor this thing ASAP
         public ProfileMembersPage NavitateToSpecificSubPage(string subPage)

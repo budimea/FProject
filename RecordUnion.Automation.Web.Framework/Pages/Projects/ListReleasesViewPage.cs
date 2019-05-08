@@ -29,7 +29,7 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
 
         public CreateNewProjectPage CreateNewProject()
         {
-            Thread.Sleep(2000);
+            Thread.Sleep(10000);
             _cardCreateProject.Click();
             return new CreateNewProjectPage(this._driver);
         }
@@ -59,6 +59,7 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
             var Search=FindProjectByName(projectTitle);
             var ProjectPad = Search.First();
             ProjectPad.ViewProjectButton.Click();
+            Thread.Sleep(2000);
             return new ProjectReleaseInformationPage(this._driver);
         }
 

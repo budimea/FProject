@@ -10,8 +10,10 @@
     <PackageReference Include="NUnit3TestAdapter" Version="3.11.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.8.0" />
     <PackageReference Include="DotNetSeleniumExtras.WaitHelpers" Version="3.11.0" />
+    <PackageReference Include="Selenium.Chrome.WebDriver" Version="2.45.0" />
     <PackageReference Include="Selenium.WebDriver" Version="3.141.0" />
     <PackageReference Include="Selenium.Support" Version="3.141.0" />
+    <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="2.45.0" />
   </ItemGroup>
 
   <ItemGroup>

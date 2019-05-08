@@ -37,5 +37,7 @@ namespace RecordUnion.Automation.Web.Framework.Components
                    EqualityComparer<IWebElement>.Default.Equals(_submit, other._submit) &&
                    EqualityComparer<IWebElement>.Default.Equals(_cancel, other._cancel);
         }
+
+        
     }
 }

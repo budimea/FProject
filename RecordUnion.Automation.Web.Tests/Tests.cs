@@ -23,6 +23,8 @@ namespace RecordUnion.Automation.Web.Tests
             inputEmailLogin.SendKeys(EnvironmentVariables.QaLoginEmail);
             IWebElement inputEmailPassword = driver.FindElement(By.CssSelector("input[type='password']"));
             inputEmailPassword.SendKeys(EnvironmentVariables.QaLoginPassword);
+            for(int i=0; i<EnvironmentVariables.QaLoginPassword.Length;i++)
+            inputEmailPassword.SendKeys(Keys.Backspace);
 
             IWebElement btnLogin = driver.FindElement(By.CssSelector("button[type='submit']"));
             

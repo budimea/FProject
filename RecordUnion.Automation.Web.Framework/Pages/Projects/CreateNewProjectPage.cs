@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Xml;
 using OpenQA.Selenium;
+using RecordUnion.Automation.Web.Framework.Components;
 using RecordUnion.Automation.Web.Framework.Constants;
 using RecordUnion.Automation.Web.Framework.UtilHelper;
 using SeleniumExtras.PageObjects;
@@ -30,7 +32,7 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
         private IWebElement FindExitButton() => _pageContentContaier
             .FindElement(By.CssSelector(".kit-svg.kit-image-button.right.kit-element.isClickable"));
 
-        private IWebElement FindProjectInputField(int field)=>_fieldsContainer.FindInputFields().ElementAt(field).InputField;
+        private IList<ValidatedInputFields> FindProjectInputField()=>_fieldsContainer.FindInputFields();
 
         public ListReleasesViewPage CreateNewProjectWithRequiredData(string value)
         {
@@ -64,9 +66,16 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
 
         private void FindInputFieldAndPopulateIt(int field, string value)
         {
-            var inputField=FindProjectInputField(field);
-            if (!inputField.Displayed)
-                EnableToggleForAddingProjectVersion();
+            var inputField = default(IWebElement);
+            var input = FindProjectInputField();
+            if(input.Count-1<field)
+                if (!CheckIfToggleIsOn())
+                {
+                    EnableToggleForAddingProjectVersion();
+                    input = FindProjectInputField();
+                }
+            inputField=input.ElementAt(field).InputField;    
+            //if (!inputField.Displayed)
             if (inputField.Equals("emoji"))
                 inputField.SendKeys("\uD83C");
             else inputField.SendKeys(value);
@@ -80,6 +89,7 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
             FindAndPopulateInputField(ReleaseMetaDataBatches.Title,requiredValue)
                 .FindAndPopulateInputField(ReleaseMetaDataBatches.Version, optionalValue);
             Proceed();
+            Thread.Sleep(2000);
             return new ListReleasesViewPage(this._driver);
         }
 
@@ -91,8 +101,9 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
 
         public bool CheckIfUserIsAbleToProceed()
         {
-            var btnProceed = FindProceedButton();
-            return btnProceed.IsEnabled();
+            var titleErrors = ReadAllValidationMessagesForSpecificField(ReleaseMetaDataBatches.Title,ValidationsMessage.Hard);
+            var versionErrors = ReadAllValidationMessagesForSpecificField(ReleaseMetaDataBatches.Version,ValidationsMessage.Hard);
+            return titleErrors.Count==0 && versionErrors.Count==0;
         }
 
         public int CountErrorMessagesReturnedForInputField(int field, string validationType)
@@ -102,7 +113,7 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
 
         private int CountWarnings(int field, String validationType)
         {
-            var elem = FindProjectInputField(field);
+            var elem = FindProjectInputField().ElementAt(field).InputField;
             return elem.ReturnWarnings(validationType).Count;
         }
 
@@ -118,7 +129,7 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
 
         public CreateNewProjectPage DeleteNumberOfCharactersFromInputField(int field, int numberOfCharacter)
         {
-            var inputField = FindProjectInputField(field);
+            var inputField = FindProjectInputField().ElementAt(field).InputField;
             inputField.RemoveNumberOfCharactersFromInputField(numberOfCharacter);
             return new CreateNewProjectPage(this._driver);
         }

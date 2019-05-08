@@ -6,7 +6,9 @@
 
   <ItemGroup>
     <PackageReference Include="DotNetSeleniumExtras.PageObjects.Core" Version="3.12.1-beta" />
+    <PackageReference Include="Selenium.Chrome.WebDriver" Version="2.45.0" />
     <PackageReference Include="Selenium.WebDriver" Version="3.141.0" />
+    <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="2.45.0" />
   </ItemGroup>
 
 </Project>

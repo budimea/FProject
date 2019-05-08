@@ -1,3 +1,5 @@
+using System.Linq;
+using System.Threading;
 using OpenQA.Selenium;
 using RecordUnion.Automation.Web.Framework.UtilHelper;
 using SeleniumExtras.PageObjects;
@@ -18,11 +20,11 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
             PageFactory.InitElements(_driver, this);
         }
 
-        public ProjectReleaseInformationPage SearchAndCreditExistingProfile(string selection)
+        public void SearchAndCreditExistingProfile(string selection)
         {
             PopulateInputFieldAndChooseExistingProfile(selection);
             ClickDone();
-            return new ProjectReleaseInformationPage(this._driver);
+            //return new ProjectReleaseInformationPage(this._driver);
         }
 
         private void ClickDone()
@@ -54,24 +56,53 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
 
         public ProjectReleaseInformationPage SearchAndCreditExistingProfileWithCollaboratorsRole(string profile, string collaboratorsRole)
         {
-            PopulateInputField(profile).ChooseFromReturnedResultSet(profile).ChooseCollaboratorRole(collaboratorsRole);
+            PopulateInputField(profile).ChooseFromReturnedResultSet(profile).PopulateRole(collaboratorsRole).ChooseCollaboratorRole(collaboratorsRole);
             ClickDone();
             return new ProjectReleaseInformationPage(this._driver);
         }
 
         private ProjectReleaseInformationPage ChooseCollaboratorRole(string collaboratorsRole)
         {
-            var inputCollaborators=_elementContainer.FindElements(By.CssSelector("input[type='text']"))[1];
-            inputCollaborators.SendKeys(collaboratorsRole);
             ChooseFromReturnedStaticResultSet(collaboratorsRole);
             return new ProjectReleaseInformationPage(this._driver);
         }
-        
+
+        private FindOrCreateProfileToCredit PopulateRole(string collaboratorsRole)
+        {
+            var inputCollaborators = _elementContainer.FindElements(By.CssSelector("input[type='text']"))[1];
+            inputCollaborators.SendKeys(collaboratorsRole);
+            return new FindOrCreateProfileToCredit(this._driver);
+        }
+
         private FindOrCreateProfileToCredit ChooseFromReturnedStaticResultSet(string selection)
         {
             var rootElement = _elementContainer.FindElement(By.ClassName("kit-suggestions"));
+            Thread.Sleep(2000);
             rootElement.SelectFromStaticDropDown(selection);
             return new FindOrCreateProfileToCredit(this._driver);
+        }
+
+        public FindOrCreateProfileToCredit CreateProfileInline(string profileName, string location)
+        {
+            var createProfileInline=PopulateInputField(profileName).ClickToCreateNewProfile();
+            createProfileInline.createProfileWithFollowingData(profileName, location);
+            return new FindOrCreateProfileToCredit(this._driver);
+        }
+
+        private ProfileInlineCreationPage ClickToCreateNewProfile()
+        {
+            var rootElement = _elementContainer.FindElement(By.ClassName("kit-suggestions"));
+            var createProfileElement = rootElement.FindElements(By.ClassName("row")).First();
+            createProfileElement.Click();
+            return new ProfileInlineCreationPage(this._driver);
+        }
+
+        public ProjectReleaseInformationPage CreateAndSelectProfileInline(string expectedProfileName, string location)
+        {
+            CreateProfileInline(expectedProfileName,location);
+            Thread.Sleep(5000);
+            ClickDone();
+            return new ProjectReleaseInformationPage(this._driver);
         }
     }
 }

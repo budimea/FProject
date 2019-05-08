@@ -1,4 +1,8 @@
-﻿namespace RecordUnion.Automation.Web.Framework.Constants
+﻿using System.Security.Cryptography;
+
+//ToDo replace this with different enums
+
+namespace RecordUnion.Automation.Web.Framework.Constants
 {
     public static class ReleaseMetaDataBatches
     {
@@ -26,5 +30,7 @@
         public const int CatalogueNumber = 3;
         public const int Ean = 4;
         public const int Language = 5;
+
+        public const string ReleaseCopyRightOwner = "Copyright Owner";
     }
 }

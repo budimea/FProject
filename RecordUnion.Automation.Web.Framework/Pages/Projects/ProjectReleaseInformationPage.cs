@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Xml;
 using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
 using RecordUnion.Automation.Web.Framework.Components;
 using RecordUnion.Automation.Web.Framework.Constants;
 using RecordUnion.Automation.Web.Framework.UtilHelper;
@@ -13,6 +15,7 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
     public class ProjectReleaseInformationPage
     {
         private IWebDriver _driver;
+        private SubMenu _subMenu;
 
         [FindsBy(How = How.CssSelector, Using = ".kit-element.enMaxWidthFORM_770")]
         private IWebElement _elementContainer;
@@ -26,6 +29,7 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
             _driver = driver;
             _webInputBatches = new List<ReleaseInputBatchComponent>();
             PageFactory.InitElements(_driver, this);
+            _subMenu = new SubMenu(_driver);
         }
 
         private List<IWebElement> FindAllInputFieldBatches() => _elementContainer
@@ -40,12 +44,19 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
             return new ProjectReleaseInformationPage(this._driver);
         }
 
+        //ToDo find loader in order to remove the Thread sleep
         private void ChangeReleaseInputWithNewValue(int batch, int field, string newValue)
         {
             var fieldBatch=FindElementInBatchInputs(batch, field);
+            Thread.Sleep(2000);
             if (!fieldBatch.InputField.Displayed)
                 EnableToggleForFieldOrComponent(batch);
-            fieldBatch.InputField.Clear();
+            var existingValue = string.Empty;
+            existingValue = GetInputFieldValue(batch, field);
+            //for(int i=0;i<existingValue.Length;i++)
+            //fieldBatch.InputField.SendKeys(Keys.Backspace);
+            fieldBatch.InputField.RemoveAllCharactersFromInputField(existingValue);
+            Thread.Sleep(1000);
             fieldBatch.InputField.SendKeys(newValue);
         }
 
@@ -66,23 +77,25 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
         {
             var _rootElement = readSpecificBatch(batch);
             var _batchInputs = _rootElement.FindInputFieldsGeneric();
-            IWebElement batchToggle = null;
-            IWebElement _submit = null;
-            IWebElement _cancel = null;
+            var _submit = _rootElement.FindElement(
+                By.CssSelector(".kit-button.button.enButtonSizeLARGE.enButtonTypePRIMARY"));
+            var _cancel = _rootElement.FindElement(
+                By.CssSelector(".kit-button.button.enButtonSizeLARGE.enButtonTypeTERTIARY"));
+            var batchToggle = TryGetToggle(_rootElement);
+            return new ReleaseInputBatchComponent(_batchInputs, batchToggle, _submit, _cancel);
+        }
+
+        private IWebElement TryGetToggle(IWebElement root)
+        {
             try
             {
-                _submit = _rootElement.FindElement(
-                    By.CssSelector(".kit-button.button.enButtonSizeLARGE.enButtonTypePRIMARY"));
-                _cancel = _rootElement.FindElement(
-                    By.CssSelector(".kit-button.button.enButtonSizeLARGE.enButtonTypeTERTIARY"));
-                batchToggle =
-                    _rootElement.FindElement(By.CssSelector(".kit-toggle"));
+                var element = root.FindElement(By.CssSelector(".kit-toggle"));
+                return element;
             }
-            catch(NoSuchElementException)
+            catch (NoSuchElementException)
             {
-                System.Console.WriteLine("This batch does not have a toggle");
+                return null;
             }
-            return new ReleaseInputBatchComponent(_batchInputs, batchToggle, _submit, _cancel);
         }
 
         private IWebElement readSpecificBatch(int batch)=>FindAllInputFieldBatches().ElementAt(batch);
@@ -90,7 +103,7 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
         private void SaveSpecificInputBatchChange(int batch)
         {
             IWebElement submitElement = getSubmitButton(batch);
-            Thread.Sleep(2000);
+            Thread.Sleep(5000);
             submitElement.Click();
         }
 
@@ -212,6 +225,7 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
             return FindDropDownGeneric(_rootDropDownContainer, field);
         }
         
+        
         private EditReleaseMetadataDropDownComponent FindDropDownGeneric(IWebElement rootDropDownContainer, int field)
         {
             var _rootDropDown = rootDropDownContainer.FindElements(By.CssSelector(".kit-dropdown")).ElementAt(field);
@@ -233,6 +247,7 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
         {
             IWebElement toggle = element.FindElement(By.ClassName("slider"));
             toggle.Click();
+            Thread.Sleep(1000);
         }
 
         public ProjectReleaseInformationPage SaveBatchWithoutValidations(int batch)
@@ -242,19 +257,24 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
             return new ProjectReleaseInformationPage(this._driver);
         }
 
-        public ProjectReleaseInformationPage AddCreditsToAcceptingMultipleProfiles(int role, string profile)
+        public ProjectReleaseInformationPage AddCreditsToRoleAcceptingMultipleProfiles(int role, List<string> profile)
         {
-            var CreditComponent=FindAllCreditsWithMultipleProfiles().ElementAt(role);
-            AddNewCreditToProfile(CreditComponent, profile);
+            var creditComponent=FindAllCreditsWithMultipleProfiles().ElementAt(role);
+            AddNewCreditToProfile(creditComponent, profile);
+            Thread.Sleep(9000);
             return new ProjectReleaseInformationPage(this._driver);
         }
 
-        private ProjectReleaseInformationPage AddNewCreditToProfile(IWebElement credit, string selection)
+        private ProjectReleaseInformationPage AddNewCreditToProfile(IWebElement credit, List<string> selection)
         {
-            var creditPad = credit.FindElement(By.CssSelector(".kit-bar.isCreator"));
-            creditPad.Click();
-            Thread.Sleep(10000);
-            CreditAProfile(selection);
+            var creditPad = credit.CreatorPad();
+            foreach (var profile in selection)
+            {
+                creditPad.Click();
+                Thread.Sleep(10000);
+                CreditAProfile(profile);
+            }
+            //CreditAProfile(selection);
             return new ProjectReleaseInformationPage(this._driver);
         }
 
@@ -265,10 +285,9 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
             return new ProjectReleaseInformationPage(this._driver);
         }
 
-        public ProjectReleaseInformationPage AddSingleCollaboratorCreditToExistingProfile(int role, string existingProfile, string collaboratorsRole)
+        public ProjectReleaseInformationPage AddSingleCollaboratorCreditToExistingProfile(IWebElement batch, string existingProfile, string collaboratorsRole)
         {
-            var creditComponent = FindAllCreditsWithMultipleProfiles().ElementAt(role);
-            var creatorPad = creditComponent.FindElement(By.CssSelector(".kit-bar.isCreator"));
+            var creatorPad =  batch.CreatorPad();
             creatorPad.Click();
             Thread.Sleep(2000);
             AddNewCollaboratorRoleToProfile(existingProfile, collaboratorsRole);
@@ -286,11 +305,12 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
         public ProjectReleaseInformationPage AddCreditToRoleAcceptingOneProfile(int role, string existingProfile)
         {
             var creditComponent = FindTheRootElementForRoleWithSingleCredit(role);
-            var creatorPad = creditComponent.FindElement(By.CssSelector(".kit-bar.isCreator"));
+            var creatorPad = creditComponent.CreatorPad();
             Thread.Sleep(1000);
             creatorPad.Click();
             Thread.Sleep(10000);
             CreditAProfile(existingProfile);
+            Thread.Sleep(1500);
             return new ProjectReleaseInformationPage(this._driver);
         }
 
@@ -337,7 +357,7 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
                 .ChooseFromNonSearchableDropDown(languageComponent, 0, selection);
             return new ProjectReleaseInformationPage(this._driver);
         }
-        
+        //ToDo extract 2 in enum
         public ListReleasesViewPage NavigateToProjectsScreen()
         {
             var btnReleases=_driver.ReturnHeaderNavigationItems().ElementAt(2);
@@ -410,7 +430,7 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
         public ProjectReleaseInformationPage ChooseAValueFromDropDownList(int batch, int field, string selection)
         {
             var dropDownField = FindElementInBatchDropDown(batch, field);
-            if (!dropDownField.InputDropDown.Displayed)
+            if (!checkIfDropDownFieldIsVisible(dropDownField))
                 EnableToggleForFieldOrComponent(batch);
             ExpandNonSearchableDropDown(dropDownField)
                 .ChooseFromNonSearchableDropDown(dropDownField, field,selection);
@@ -420,9 +440,15 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
         public bool CheckIfLookUpFieldReturnsValues(int batch, int field)
         {
             var dropDownField = FindElementInBatchDropDown(batch, field);
-            if (dropDownField.InputDropDown.Displayed)
-                return dropDownField.InputDropDown.IsEnabled();
-            return false;
+            return checkIfDropDownFieldIsVisible(dropDownField);
+        }
+
+        private bool checkIfDropDownFieldIsVisible(EditReleaseMetadataDropDownComponent dropDownField)
+        {
+            var elementExist =
+                dropDownField.InputDropDown.FindElements(
+                    By.CssSelector(".kit-validatee.kit-validatee-base-BLACKCURRANT_14.isCollapsed"));
+            return elementExist.Count != 1;
         }
 
         public ProjectReleaseInformationPage ClearValueFromField(int batch, int field)
@@ -432,14 +458,165 @@ namespace RecordUnion.Automation.Web.Framework.Pages.Projects
             return new ProjectReleaseInformationPage(this._driver);
         }
 
-        public ProjectReleaseInformationPage ChooseAValueFromDropDownList(int batch, string selection)
+        public ProjectReleaseInformationPage ChooseAValueFromDropDownList(int batch, string selection) => ChooseAValueFromDropDownList(batch, 0, selection);
+
+        public string GetDropDownFieldValue(int batch)=> GetDropDownFieldValue(batch, 0);
+
+        public CreditedProfileForRole GetCreditedProfileForRoleWithSingleCredit(int batch)
         {
-            return ChooseAValueFromDropDownList(batch, 0, selection);
+            var requestedBatch = FindTheRootElementForRoleWithSingleCredit(batch);
+            try
+            {
+                var profileName = requestedBatch.FindElement(By.CssSelector(".kit-typography.enTypographyTypes-H3.qa-profile-name"));
+                var profileCredit = requestedBatch.FindElement(By.CssSelector(".kit-tag"));
+                var profileLocation =
+                    requestedBatch.FindElement(By.CssSelector(".kit-typography.enTypographyTypes-B3.qa-profile-location"));
+                var actionButtons = requestedBatch.FindElements(By.ClassName("kit-mint")).ToList();
+                if (actionButtons.Count==3) actionButtons.RemoveAt(0);
+                return new CreditedProfileForRole(profileName.Text,profileCredit.Text, profileLocation.Text,actionButtons.ElementAt(0),  actionButtons.ElementAt(1));
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
         }
 
-        public string GetDropDownFieldValue(int batch)
+        public ProjectReleaseInformationPage RemoveCreditFromRoleAcceptingOneProfile(int batch)
         {
-            return GetDropDownFieldValue(batch, 0);
+            var getCreditedProfile = GetCreditedProfileForRoleWithSingleCredit(batch);
+            getCreditedProfile.RemoveBtn.Click();
+            Thread.Sleep(2500);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        public ProjectReleaseInformationPage CreateAndAddProfileToRoleAcceptingOneRole(int batch, string expectedProfileName, string location)
+        {
+            CreateProfileInlineForRole(batch, expectedProfileName, location);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        private FindOrCreateProfileToCredit CreateProfileInlineForRole(int batch, string expectedProfileName, string location)
+        {
+            var createdProfile =new FindOrCreateProfileToCredit(this._driver);
+            var requiredBatch = FindTheRootElementForRoleWithSingleCredit(batch);
+            var creatorPad = requiredBatch.CreatorPad();
+            creatorPad.Click();
+            createdProfile.CreateAndSelectProfileInline(expectedProfileName, location);
+            return new FindOrCreateProfileToCredit(this._driver);
+        }
+
+        /*private IWebElement CreatorPad(IWebElement requiredBatch)
+        {
+                var creatorPad = requiredBatch.FindElements(By.CssSelector(".kit-bar.isCreator"));
+                return creatorPad.SingleOrDefault();
+        }*/
+
+        public bool IsCreatorButtonPresentForSingleProfileRoles(int batch)
+        {
+            var searchedBatch = FindTheRootElementForRoleWithSingleCredit(batch);
+            var creatorPad = searchedBatch.CreatorPad();
+            return creatorPad == null;
+        }
+
+        public ProjectReleaseInformationPage EditRoleAcceptingOneRole(int batch, string profile)
+        {
+            var getCreditedProfile = GetCreditedProfileForRoleWithSingleCredit(batch);
+            getCreditedProfile.EditBtn.Click();
+            CreditAProfile(profile);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        public int getNumberOfCreatedProfilesForRolesWithSingleCredit(int batch)
+        {
+            var searchedBatch = FindTheRootElementForRoleWithSingleCredit(batch);
+            var numberOfProfiles = searchedBatch.FindElements(By.CssSelector(".kit-row"));
+            return numberOfProfiles.Count();
+        }
+
+        public List<CreditedProfileForRole> GetCreditedProfilesForRoleWithMultipleCredits(int batch)
+        {
+            var listOfCreditedProfiles=new List<CreditedProfileForRole>();
+            var requestedBatch = FindAllCreditsWithMultipleProfiles().ElementAt(batch);
+            var multipleCredits = requestedBatch.FindElements(By.CssSelector(".kit-bar")).ToList();
+            if (multipleCredits.Count==1) return listOfCreditedProfiles;
+            multipleCredits.RemoveAt(0);
+            foreach (var elem in multipleCredits)
+            {
+                var profileName = elem.FindElement(By.CssSelector(".kit-typography.enTypographyTypes-H3.qa-profile-name"));
+                var profileCredit = elem.FindElement(By.CssSelector(".kit-tag"));
+                var profileLocation =
+                    elem.FindElement(By.CssSelector(".kit-typography.enTypographyTypes-B3.qa-profile-location"));
+                var actionButtons = elem.FindElements(By.ClassName("kit-mint"));
+                listOfCreditedProfiles.Add(new CreditedProfileForRole(profileName.Text,profileCredit.Text, 
+                    profileLocation.Text,null,actionButtons.ElementAt(0)));
+            }
+            return listOfCreditedProfiles;
+        }
+
+        public ProjectReleaseInformationPage RemoveCreditFromRoleAcceptingMultipleProfiles(int batch, List<string> profiles)
+        {
+            var getCreditedProfiles = GetCreditedProfilesForRoleWithMultipleCredits(batch);
+            foreach (var elem in getCreditedProfiles)
+            {
+                if(profiles.Contains(elem.ProfileName))
+                    elem.RemoveBtn.Click();
+                Thread.Sleep(2500);
+                PageFactory.InitElements(_driver, this);
+            }
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        public ProjectReleaseInformationPage CreateAndAddProfileToRoleAcceptingMultipleProfiles(int batch, string profileName, string location)
+        {
+            var createdProfile =new FindOrCreateProfileToCredit(this._driver);
+            var locatedBatch = FindAllCreditsWithMultipleProfiles().ElementAt(batch);
+            var creatorPad = locatedBatch.CreatorPad();
+            creatorPad.Click();
+            createdProfile.CreateAndSelectProfileInline(profileName, location);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        public ProjectReleaseInformationPage ToggleOffLabelOption(int batch)
+        {
+            var labelProfile = FindTheRootElementForRoleWithSingleCredit(batch);
+                ChangeToggle(labelProfile);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        public string GetCatalogueNumber(int batch)
+        {
+            var catalogueNumber = FindAllInputFieldBatches().ElementAt(batch);
+            return catalogueNumber.FindElement(By.TagName("input")).GetAttribute("value");
+        }
+
+        public ProjectReleaseInformationPage RemoveCatalogueNumber(int batch)
+        {
+            //var catalogueNumber = FindAllInputFieldBatches().ElementAt(batch);
+            var catalogueNumber = GetInputValueInBatch(batch, 0);
+            var catalogueInput = GetInputFieldValue(batch, 0);
+            //catalogueNumber.GetAttribute("value").ToString();
+            catalogueNumber.RemoveAllCharactersFromInputField(catalogueInput);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        public ProjectReleaseInformationPage AddCreditsToRoleAcceptingMultipleProfiles(int batch,
+            List<CreditedProfileForRole> listOfCollaboratorsWithRoles)
+        {
+            var creditComponent=FindAllCreditsWithMultipleProfiles().ElementAt(batch);
+            foreach (var profile in listOfCollaboratorsWithRoles)
+            {
+                AddSingleCollaboratorCreditToExistingProfile(creditComponent, profile.ProfileName, profile.ProfileCredit);
+            }
+            Thread.Sleep(9000);
+            return new ProjectReleaseInformationPage(this._driver);
+        }
+
+        public TrackListPage NavigateToTrackListPage()
+        {
+            Thread.Sleep(2000);
+            _subMenu.NavitateToSpecificSubPage(EnvironmentVariables.ProjectTracks);
+            Thread.Sleep(2000);
+            return new TrackListPage(this._driver);
         }
     }
 }

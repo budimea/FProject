@@ -11,8 +11,8 @@ namespace RecordUnion.Automation.Web.Framework.Components
 
         public ValidatedInputFields(IWebElement inputField, IWebElement listOfErrorMessages)
         {
-            InputField = inputField ?? throw new ArgumentNullException(nameof(inputField));
-            ListOfErrorMessages = listOfErrorMessages ?? throw new ArgumentNullException(nameof(listOfErrorMessages));
+            InputField = inputField;
+            ListOfErrorMessages = listOfErrorMessages;
         }
 
         public IWebElement InputField { get => _inputField; set => _inputField = value; }
@@ -29,6 +29,5 @@ namespace RecordUnion.Automation.Web.Framework.Components
                    EqualityComparer<IWebElement>.Default.Equals(InputField, other.InputField) &&
                    EqualityComparer<IWebElement>.Default.Equals(ListOfErrorMessages, other.ListOfErrorMessages);
         }
-
     }
 }

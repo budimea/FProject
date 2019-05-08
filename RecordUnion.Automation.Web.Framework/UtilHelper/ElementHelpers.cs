@@ -67,14 +67,19 @@ namespace RecordUnion.Automation.Web.Framework.UtilHelper
                 tmp.Add(element.FindElement(By.XPath("..")));
             return tmp;
         }
-        
-        public static List<string> ReadAllTextMessagesReturnedInWarning(this IWebElement element, IList<IWebElement> Messages)
+
+        private static List<string> ReadAllTextMessagesReturnedInWarning(this IWebElement element, IList<IWebElement> Messages)
         {
-            var warningTextMessages = new List<String>();
+            var warningTextMessages = new List<string>();
             foreach (IWebElement elem in Messages)
             {
                 IWebElement message = elem.FindElement(By.ClassName("title"));
-                warningTextMessages.Add(message.Text);
+                if (message.Text.StartsWith("\""))
+                {
+                    string noQuotes=message.Text.Replace("\"", String.Empty);
+                    warningTextMessages.Add(noQuotes);
+                }
+                else warningTextMessages.Add(message.Text);
             }
             return warningTextMessages;
         }
@@ -112,6 +117,18 @@ namespace RecordUnion.Automation.Web.Framework.UtilHelper
                 elem.SendKeys(Keys.Backspace);
                 number--;
             }
+        }
+
+        public static void RemoveAllCharactersFromInputField(this IWebElement elem, string inputValue)
+        {
+            for(int i=0;i<inputValue.Length;i++)
+                elem.SendKeys(Keys.Backspace);
+        }
+        
+        public static IWebElement CreatorPad(this IWebElement batch)
+        {
+            var creatorPad = batch.FindElements(By.CssSelector(".kit-bar.isCreator"));
+            return creatorPad.SingleOrDefault();
         }
 
     }
